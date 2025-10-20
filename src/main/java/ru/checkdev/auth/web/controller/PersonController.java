@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.checkdev.auth.domain.Profile;
+import ru.checkdev.auth.mapper.ProfileMapper;
 import ru.checkdev.auth.service.PersonService;
 import ru.checkdev.auth.service.RoleService;
 
@@ -31,11 +32,15 @@ public class PersonController {
     private final StandardPasswordEncoder encoding = new StandardPasswordEncoder();
     private final PersonService persons;
     private final RoleService roles;
+    private final ProfileMapper profileMapper;
 
     @Autowired
-    public PersonController(final PersonService persons, RoleService roles) {
+    public PersonController(final PersonService persons,
+                            RoleService roles,
+                            ProfileMapper profileMapper) {
         this.persons = persons;
         this.roles = roles;
+        this.profileMapper = profileMapper;
     }
 
     @GetMapping("/current")
@@ -146,5 +151,24 @@ public class PersonController {
         map.put("personsShowed", persons.findByShow(true, PageRequest.of(pageToShow, limit)));
         map.put("getTotal", persons.showed());
         return new ResponseEntity<>(map, HttpStatus.OK);
+    }
+
+    /**
+     * Метод проверяет наличие email в базе
+     */
+    @GetMapping("/isavaliableemail")
+    public Object isAvailableEmail(@RequestParam String email) {
+        Optional<Profile> result = persons.findByEmail(email);
+        return result.isEmpty();
+    }
+
+    /**
+     * Метод возвращает PersonDTO по email
+     */
+    @GetMapping("/by/email")
+    public Object findByEmail(@RequestParam String email) {
+        Optional<Profile> profile = persons.findByEmail(email);
+        return profile.isEmpty() ? Optional.empty()
+                : profileMapper.getDtoFromEntity(profile.get());
     }
 }

@@ -54,19 +54,23 @@ public class PersonService {
         this.msg = msg;
     }
 
+    /**
+     *  В схеме БД на таблице 'person' на полях 'username' 'email' имеется ограничение 'unique="true"'
+     */
     public Optional<Profile> reg(Profile profile) {
         Optional<Profile> result = Optional.empty();
+
         try {
             if (profile.isPrivacy()) {
                 profile.setRoles(null);
                 profile.setActive(true);
-                profile.setKey(
-                        this.encoding.encode(
-                                String.format("%s%s", System.currentTimeMillis(), profile.getPassword())
-                        )
-                );
+                profile.setKey(this.encoding.encode(
+                        String.format("%s%s", System.currentTimeMillis(), profile.getPassword())));
                 profile.setPassword(this.encoding.encode(profile.getPassword()));
-                profile.setUpdated(Calendar.getInstance());
+                Calendar now = Calendar.getInstance();
+                profile.setCreated(now);
+                profile.setUpdated(now);
+
                 result = Optional.of(this.persons.save(profile));
                 Map<String, Object> keys = new HashMap<>();
                 keys.put("key", profile.getKey());
